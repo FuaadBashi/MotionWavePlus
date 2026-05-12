@@ -1,0 +1,3 @@
+/Users/fuaadshurie/Desktop/Motionwaveplus/build/CMakeFiles/MotionWavePlus.dir
+/Users/fuaadshurie/Desktop/Motionwaveplus/build/CMakeFiles/edit_cache.dir
+/Users/fuaadshurie/Desktop/Motionwaveplus/build/CMakeFiles/rebuild_cache.dir
