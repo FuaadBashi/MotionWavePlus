@@ -3,13 +3,18 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/opt/homebrew/include/**"
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/include",
+                "/opt/homebrew/include",
+                "/opt/homebrew/Cellar/raylib/5.5/include"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang++",
             "cStandard": "c17",
-            "cppStandard": "c++14",
+            "cppStandard": "c++20",
             "intelliSenseMode": "macos-clang-arm64"
         }
     ],
