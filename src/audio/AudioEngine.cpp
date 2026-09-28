@@ -3,7 +3,6 @@
 
 #include "AudioEngine.h"
 
-#include <algorithm>
 #include <cstring>
 #include <iostream>
 
@@ -14,8 +13,8 @@ constexpr ma_uint32 kSampleRate = 44100;
 
 ma_device s_device;
 
-// Runs on miniaudio's real-time thread, so it must not block, allocate or print. (It used to
-// print on every call.)
+// Runs on miniaudio's real-time thread, so it must not wait on locks, allocate or print. (It used
+// to print on every call.) It does decode here, which reads the file; see the README.
 void data_callback(ma_device *device, void *output, const void * /*input*/, ma_uint32 frame_count) {
     auto *audio = static_cast<AudioData *>(device->pUserData);
     auto *out = static_cast<float *>(output);
@@ -31,11 +30,8 @@ void data_callback(ma_device *device, void *output, const void * /*input*/, ma_u
         audio->finished = true;
     }
 
-    const int samples =
-        std::min(static_cast<int>(frame_count * kChannels), AudioData::kVisualSamples);
-    std::lock_guard<std::mutex> lock(audio->audio_mutex);
-    std::memcpy(audio->audio_samples, out, samples * sizeof(float));
-    audio->sample_count = samples;
+    // Never waits: if the renderer is mid-copy, this block is simply not drawn.
+    audio->visual.tryPublish(out, static_cast<int>(frame_count * kChannels));
 }
 
 } // namespace

@@ -15,12 +15,16 @@ all of that for two focused libraries and ends up with a fraction of the code.
 ## How it works
 
 - **Real-time audio callback.** miniaudio calls `data_callback` on its audio thread whenever the
-  device needs samples. The callback decodes straight into the device's buffer and never
-  allocates, blocks or prints, so playback doesn't glitch. Past the end of the track it outputs
-  silence.
-- **Hand-off to the renderer.** The callback copies the latest block of samples under a short
-  mutex. The render loop copies it out and draws outside the lock, so the audio thread barely
-  waits.
+  device needs samples. The callback decodes straight into the device's buffer and does not
+  allocate, print or wait on a lock, the usual causes of audio dropouts. It does decode on that
+  thread, which means reading the file. That is fine for a local file; a player reading from slow
+  storage would decode ahead on another thread, as the [first version](https://github.com/FuaadBashi/MotionWave)
+  does. Past the end of the track it outputs silence.
+- **Hand-off to the renderer.** [`SampleExchange`](src/audio/SampleExchange.h) holds the latest
+  block of samples. The callback only *tries* its lock: if the renderer is mid-copy, that block is
+  skipped rather than making the audio thread wait. A unit test holds the buffer from a
+  "renderer" thread and checks that publishing returns immediately. The render loop copies the
+  block out and draws from the copy.
 - **Testable drawing maths.** `waveformPoints` downmixes stereo to mono and maps samples to
   screen coordinates. It has no raylib dependency and is unit-tested.
 - **Resizable window.** The waveform scales to the current window size.

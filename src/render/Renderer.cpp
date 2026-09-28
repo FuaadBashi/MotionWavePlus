@@ -4,18 +4,10 @@
 #include "audio/AudioData.h"
 #include "raylib.h"
 
-#include <cstring>
-
 void Renderer::draw(AudioData *audio) {
-    float local[AudioData::kVisualSamples];
-    int size;
-    {
-        // Copy under the lock and draw outside it, so the audio thread waits as little as
-        // possible.
-        std::lock_guard<std::mutex> lock(audio->audio_mutex);
-        size = audio->sample_count;
-        std::memcpy(local, audio->audio_samples, size * sizeof(float));
-    }
+    // Copy the latest block out and draw from the copy, so the buffer is held only for a memcpy.
+    float local[SampleExchange::kCapacity];
+    const int size = audio->visual.copyLatest(local);
 
     const float width = static_cast<float>(GetScreenWidth());
     const float height = static_cast<float>(GetScreenHeight());
