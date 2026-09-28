@@ -1,32 +1,26 @@
 #include "Renderer.h"
-#include "raylib.h"
+
+#include "Waveform.h"
 #include "audio/AudioData.h"
+#include "raylib.h"
 
-
-bool Renderer::init() {
-    return true;
-}
+#include <cstring>
 
 void Renderer::draw(AudioData *audio) {
-
-    float local[4096];
+    float local[AudioData::kVisualSamples];
     int size;
     {
+        // Copy under the lock and draw outside it, so the audio thread waits as little as
+        // possible.
         std::lock_guard<std::mutex> lock(audio->audio_mutex);
         size = audio->sample_count;
-        memcpy(local, audio->audio_samples, size * sizeof(float));
+        std::memcpy(local, audio->audio_samples, size * sizeof(float));
     }
-    int frames = size / 2;
-    for (int i = 1; i < frames; ++i) {
-    float mono_prev = (local[(i-1) * 2] + local[(i-1) * 2 + 1]) / 2.0f;
-    float mono_curr = (local[i * 2] + local[i * 2 + 1]) / 2.0f;
 
-    Vector2 prev = { (i-1) / (float)(frames-1) * 1280, 360 + mono_prev * 200.0f };
-    Vector2 curr = { i     / (float)(frames-1) * 1280, 360 + mono_curr * 200.0f };
-
-    DrawLineV(prev, curr, ORANGE);
-    } //this was done with ai cause i was lazy
-}
-
-void Renderer::cleanup() {
+    const float width = static_cast<float>(GetScreenWidth());
+    const float height = static_cast<float>(GetScreenHeight());
+    const std::vector<Point> points = waveformPoints(local, size, width, height, height * 0.28f);
+    for (std::size_t i = 1; i < points.size(); ++i) {
+        DrawLineEx({points[i - 1].x, points[i - 1].y}, {points[i].x, points[i].y}, 2.0f, ORANGE);
+    }
 }
